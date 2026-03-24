@@ -1,0 +1,29 @@
+{
+  "name": "automation-hr",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright E2E tests (HR / Bluworks staging)",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:e2e": "playwright test --project=chromium",
+    "test:chrome": "playwright test --project=google-chrome",
+    "test:chrome:headed": "playwright test --project=google-chrome --headed",
+    "test:smoke": "playwright test --project=chromium --grep @smoke",
+    "test:regression": "playwright test --project=chromium --grep @regression",
+    "test:release": "playwright test --project=chromium",
+    "test:headed": "playwright test --project=chromium --headed",
+    "test:list": "playwright test --list --project=chromium",
+    "install:browsers": "playwright install chromium",
+    "install:browsers:chrome": "playwright install chrome",
+    "install:browsers:ci": "playwright install --with-deps chromium"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0",
+    "@types/node": "^22.10.0",
+    "dotenv": "^16.4.7",
+    "typescript": "^5.7.2"
+  }
+}
