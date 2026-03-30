@@ -15,7 +15,8 @@
     "test:list": "playwright test --list --project=chromium",
     "install:browsers": "playwright install chromium",
     "install:browsers:chrome": "playwright install chrome",
-    "install:browsers:ci": "playwright install --with-deps chromium"
+    "install:browsers:ci": "playwright install --with-deps chromium",
+    "export:tests:xlsx": "node scripts/export-login-tests-xlsx.cjs"
   },
   "engines": {
     "node": ">=18"
@@ -24,6 +25,7 @@
     "@playwright/test": "^1.51.0",
     "@types/node": "^22.10.0",
     "dotenv": "^16.4.7",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "xlsx": "^0.18.5"
   }
 }

@@ -43,11 +43,19 @@ const validOtp = process.env.E2E_STAGING_OTP?.trim();
 const invalidOtp = process.env.E2E_INVALID_OTP?.trim();
 
 /**
- * Fixed staging OTP per environment notes (overridable for forks / other envs).
+ * Fixed staging OTP for Egypt (overridable for forks / other envs).
  */
 export const stagingOtp = {
   valid: validOtp && validOtp.length > 0 ? validOtp : '8182',
   invalid: invalidOtp && invalidOtp.length > 0 ? invalidOtp : '9090',
+};
+
+/**
+ * Fixed staging OTP for UAE — different from Egypt.
+ */
+export const uaeOtp = {
+  valid: '2050',
+  invalid: '9090',
 };
 
 /**
@@ -75,10 +83,9 @@ export type EgyptPrefix = keyof typeof egyptPhonesByPrefix;
 
 /**
  * UAE login — valid national number for staging.
- * TODO: Replace `validPhone` with the finalized UAE staging number when available.
  */
 export const uaeLogin = {
-  validPhone: '501234567',
+  validPhone: '507021238',
 } as const;
 
 /**
@@ -88,9 +95,6 @@ export const invalidPhones = {
   /** Clearly invalid pattern for Egypt selection */
   malformed: '12ab34cd',
   tooShort: '123',
-  /**
-   * Entered while Egypt (+20) is still selected — should fail validation or block OTP.
-   * TODO: Adjust to match the exact UAE national format the app expects when UAE is selected.
-   */
-  uaeNumberWhileEgyptSelected: '501234567',
+  /** Entered while Egypt (+20) is still selected — should fail validation or block OTP. */
+  uaeNumberWhileEgyptSelected: '507021238',
 } as const;

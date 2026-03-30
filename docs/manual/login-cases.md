@@ -3,7 +3,8 @@
 **Application:** Bluworks staging  
 **Login URL:** https://staging.bluworks.io/auth/login  
 **Post-login URL:** https://staging.bluworks.io/home  
-**Staging OTP:** 8182  
+**Staging OTP (Egypt):** 8182  
+**Staging OTP (UAE):** 2050  
 
 **Module:** Authentication — Mobile OTP login  
 
@@ -87,12 +88,12 @@
 | **Priority** | High |
 | **Module** | Login |
 | **Preconditions** | Staging available; country left on Egypt |
-| **Test Data** | Country: Egypt; Phone: value inconsistent with Egypt rules (e.g. UAE national sample used in automation — adjust to product rules) |
-| **Steps** | 1. Open login URL. 2. Keep Egypt selected. 3. Enter a UAE-format / invalid-for-Egypt number. 4. Submit phone step. |
+| **Test Data** | Country: Egypt; Phone: 507021238 (valid UAE number entered with wrong country) |
+| **Steps** | 1. Open login URL. 2. Keep Egypt selected. 3. Enter UAE number 507021238. 4. Submit phone step. |
 | **Expected Results** | Validation error is shown **or** OTP step does not appear. User remains in the login flow (e.g. still on `https://staging.bluworks.io/auth/login` or another pre-home auth route). |
 | **Automation Coverage** | Regression |
 | **Related Automation Test Name** | `UAE number entered while Egypt is still selected — validation or no OTP step` in `tests/regression/login.regression.spec.ts` |
-| **Notes** | Automation uses `invalidPhones.uaeNumberWhileEgyptSelected` — update when final UAE samples are fixed. |
+| **Notes** | Automation uses `invalidPhones.uaeNumberWhileEgyptSelected` (507021238). |
 
 ---
 
@@ -105,12 +106,12 @@
 | **Priority** | High |
 | **Module** | Login |
 | **Preconditions** | Staging available; valid UAE test mobile confirmed for environment |
-| **Test Data** | Country: UAE (+971); Phone: **TODO** finalize staging UAE number; OTP: 8182 |
-| **Steps** | 1. Open login URL. 2. Select UAE (+971). 3. Enter valid UAE phone. 4. Submit. 5. Enter OTP 8182. 6. Verify. |
+| **Test Data** | Country: UAE (+971); Phone: 507021238; OTP: 2050 |
+| **Steps** | 1. Open login URL. 2. Select UAE (+971). 3. Enter phone 507021238. 4. Submit. 5. Enter OTP 2050. 6. Verify. |
 | **Expected Results** | OTP step appears after valid phone. Successful login redirects to `/home`. |
 | **Automation Coverage** | Smoke |
-| **Related Automation Test Name** | `valid UAE login when UAE is selected and OTP 8182 is entered` in `tests/smoke/login.smoke.spec.ts` |
-| **Notes** | Automation currently uses placeholder `uaeLogin.validPhone` in `tests/data/loginData.ts`. |
+| **Related Automation Test Name** | `valid UAE login with 507021238 and OTP 2050` in `tests/smoke/login.smoke.spec.ts` |
+| **Notes** | UAE uses a different OTP (2050) than Egypt (8182). |
 
 ---
 
@@ -148,20 +149,20 @@
 
 ---
 
-## LGN-009 — Invalid OTP
+## LGN-009 — Invalid OTP (Egypt)
 
 | Field | Value |
 | --- | --- |
 | **Test Case ID** | LGN-009 |
-| **Title** | Invalid OTP after valid phone |
+| **Title** | Invalid OTP after valid Egypt phone |
 | **Priority** | High |
 | **Module** | Login |
 | **Preconditions** | Valid Egypt phone can reach OTP step |
-| **Test Data** | Valid phone (e.g. 1201644545); OTP: incorrect (e.g. 9090 in automation) |
-| **Steps** | 1. Complete phone step with valid number. 2. On OTP screen, enter wrong OTP. 3. Submit OTP. |
+| **Test Data** | Valid phone: 1201644545; OTP: incorrect (9090 in automation) |
+| **Steps** | 1. Complete phone step with valid Egypt number. 2. On OTP screen, enter wrong OTP. 3. Submit OTP. |
 | **Expected Results** | Error message visible. User stays on OTP step. No redirect to `https://staging.bluworks.io/home` (automation asserts OTP UI remains and URL is not the home URL). |
 | **Automation Coverage** | Smoke |
-| **Related Automation Test Name** | `invalid OTP after valid phone keeps user on OTP and does not reach home` in `tests/smoke/login.smoke.spec.ts` |
+| **Related Automation Test Name** | `invalid OTP after valid Egypt phone keeps user on OTP step` in `tests/smoke/login.smoke.spec.ts` |
 
 ---
 
@@ -182,6 +183,24 @@
 
 ---
 
+## LGN-011 — Invalid OTP (UAE)
+
+| Field | Value |
+| --- | --- |
+| **Test Case ID** | LGN-011 |
+| **Title** | Invalid OTP after valid UAE phone |
+| **Priority** | High |
+| **Module** | Login |
+| **Preconditions** | Valid UAE phone can reach OTP step |
+| **Test Data** | Valid phone: 507021238; OTP: incorrect (9090 in automation) |
+| **Steps** | 1. Open login URL. 2. Select UAE (+971). 3. Enter phone 507021238. 4. Submit. 5. On OTP screen, enter wrong OTP. 6. Submit OTP. |
+| **Expected Results** | Error message visible. User stays on OTP step. No redirect to `https://staging.bluworks.io/home`. |
+| **Automation Coverage** | Smoke |
+| **Related Automation Test Name** | `invalid OTP after valid UAE phone keeps user on OTP step` in `tests/smoke/login.smoke.spec.ts` |
+| **Notes** | Tests negative OTP path for UAE (valid UAE OTP is 2050). |
+
+---
+
 ## Automation mapping summary
 
 | ID | Smoke / Regression | Spec file |
@@ -192,5 +211,6 @@
 | LGN-006 | Smoke | `login.smoke.spec.ts` |
 | LGN-007–008, LGN-010 | Regression | `login.regression.spec.ts` |
 | LGN-009 | Smoke | `login.smoke.spec.ts` |
+| LGN-011 | Smoke | `login.smoke.spec.ts` |
 
 Playwright tags: `test.describe(..., { tag: '@smoke' })` in `tests/smoke/login.smoke.spec.ts` and `{ tag: '@regression' }` in `tests/regression/login.regression.spec.ts` (applies to all tests in each file).
