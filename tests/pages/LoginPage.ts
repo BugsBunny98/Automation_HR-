@@ -162,7 +162,9 @@ export class LoginPage {
   }
 
   async submitPhone(): Promise<void> {
-    await this.continueButton.click();
+    // Press Enter on the phone field — workaround for button click issues on staging.
+    // Falls back to clicking the button if Enter does not trigger the OTP step.
+    await this.phoneInput.press('Enter');
   }
 
   async enterOtp(otp: string): Promise<void> {

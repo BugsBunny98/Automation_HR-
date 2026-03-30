@@ -24,17 +24,34 @@ function readBaseURL(): string {
 
 const baseURL = readBaseURL();
 
+// Auth state storage path (shared across test projects)
+const authFile = path.join(__dirname, 'playwright', '.auth', 'user.json');
+
+// Determine if we should run setup project (can be skipped in some CI scenarios)
+const skipSetup = process.env.SKIP_AUTH_SETUP === '1';
+
 export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.spec.ts',
+
   // Staging OTP/login is sensitive to parallel hits across files — run one test at a time by default.
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
   workers: 1,
-  reporter: process.env.CI ? [['github'], ['line']] : [['html', { open: 'never' }], ['list']],
+
+  // Reporter configuration
+  reporter: process.env.CI
+    ? [['github'], ['html', { outputFolder: 'playwright-report', open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
+    : [['html', { outputFolder: 'playwright-report', open: 'never' }], ['list']],
+
+  // Global timeouts
   timeout: 60_000,
   expect: { timeout: 15_000 },
+
+  // Output directories (Docker-compatible paths)
+  outputDir: 'test-results',
+
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -43,13 +60,85 @@ export default defineConfig({
     actionTimeout: 15_000,
     navigationTimeout: 45_000,
   },
+
   projects: [
-    /** Bundled Chromium (CI + default) */
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    /** Installed Google Chrome on your machine — run: npm run test:chrome */
+    // ==========================================================================
+    // Setup Project — runs first to establish authentication state
+    // ==========================================================================
+    {
+      name: 'setup',
+      testMatch: /global\.setup\.ts/,
+      testDir: './tests/setup',
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
+
+    // ==========================================================================
+    // Chromium Project — main test execution (uses auth state from setup)
+    // ==========================================================================
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use stored auth state if setup ran successfully
+        ...(skipSetup ? {} : { storageState: authFile }),
+      },
+      // Depend on setup project to run first (unless explicitly skipped)
+      dependencies: skipSetup ? [] : ['setup'],
+    },
+
+    // ==========================================================================
+    // Google Chrome Project — uses locally installed Chrome
+    // ==========================================================================
     {
       name: 'google-chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chrome',
+        ...(skipSetup ? {} : { storageState: authFile }),
+      },
+      dependencies: skipSetup ? [] : ['setup'],
+    },
+
+    // ==========================================================================
+    // Smoke Tests Project — quick validation suite
+    // ==========================================================================
+    {
+      name: 'smoke',
+      testMatch: '**/*.smoke.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(skipSetup ? {} : { storageState: authFile }),
+      },
+      dependencies: skipSetup ? [] : ['setup'],
+    },
+
+    // ==========================================================================
+    // Regression Tests Project — comprehensive test suite
+    // ==========================================================================
+    {
+      name: 'regression',
+      testMatch: '**/*.regression.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(skipSetup ? {} : { storageState: authFile }),
+      },
+      dependencies: skipSetup ? [] : ['setup'],
+    },
+
+    // ==========================================================================
+    // Onboarding Tests Project — CS dashboard onboarding flows
+    // ==========================================================================
+    {
+      name: 'onboarding',
+      testMatch: '**/*.onboarding.spec.ts',
+      testDir: './tests/onboarding',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(skipSetup ? {} : { storageState: authFile }),
+      },
+      dependencies: skipSetup ? [] : ['setup'],
     },
   ],
 });
