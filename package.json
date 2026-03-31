@@ -6,36 +6,30 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
 
-    "test:e2e": "playwright test --project=chromium",
-    "test:chrome": "playwright test --project=google-chrome",
+    "test:e2e":        "playwright test --project=chromium",
+    "test:chrome":     "playwright test --project=google-chrome",
     "test:chrome:headed": "playwright test --project=google-chrome --headed",
-    "test:smoke": "playwright test --project=smoke",
+    "test:smoke":      "playwright test --project=smoke",
     "test:regression": "playwright test --project=regression",
     "test:onboarding": "playwright test --project=onboarding",
-    "test:setup": "playwright test --project=setup",
-    "test:release": "playwright test --project=chromium",
-    "test:headed": "playwright test --project=chromium --headed",
-    "test:list": "playwright test --list --project=chromium",
-    "test:debug": "playwright test --project=chromium --debug",
+    "test:setup":      "playwright test --project=setup",
+    "test:release":    "playwright test --project=chromium",
+    "test:headed":     "playwright test --project=chromium --headed",
+    "test:list":       "playwright test --list --project=chromium",
+    "test:debug":      "playwright test --project=chromium --debug",
 
-    "install:browsers": "playwright install chromium",
+    "install:browsers":     "playwright install chromium",
     "install:browsers:chrome": "playwright install chrome",
-    "install:browsers:ci": "playwright install --with-deps chromium",
-<<<<<<< Current (Your changes)
-=======
+    "install:browsers:ci":  "playwright install --with-deps chromium",
 
-    "docker:build": "docker build -t playwright-e2e .",
-    "docker:test": "docker-compose run --rm playwright",
-    "docker:smoke": "docker-compose run --rm -e TEST_SUITE=smoke playwright",
-    "docker:regression": "docker-compose run --rm -e TEST_SUITE=regression playwright",
-    "docker:onboarding": "docker-compose run --rm -e TEST_SUITE=onboarding playwright",
-    "docker:shell": "docker-compose run --rm --entrypoint /bin/bash playwright",
-    "docker:clean": "docker-compose down --rmi local --volumes --remove-orphans",
+    "docker:test":       "docker compose run --rm playwright",
+    "docker:smoke":      "docker compose run --rm smoke",
+    "docker:regression": "docker compose run --rm regression",
+    "docker:onboarding": "docker compose run --rm onboarding",
 
     "report:show": "playwright show-report",
     "report:open": "playwright show-report playwright-report",
 
->>>>>>> Incoming (Background Agent changes)
     "export:tests:xlsx": "node scripts/export-login-tests-xlsx.cjs"
   },
   "engines": {

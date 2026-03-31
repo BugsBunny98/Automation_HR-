@@ -2,58 +2,41 @@ name: Playwright E2E
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master]
   pull_request:
-    branches: [main, master, develop]
-  # Manual trigger with suite selection
+    branches: [main, master, release/**]
   workflow_dispatch:
     inputs:
-      test_suite:
+      suite:
         description: 'Test suite to run'
         required: true
-        default: 'smoke'
+        default: regression
         type: choice
         options:
           - smoke
           - regression
           - onboarding
-          - e2e
-      use_docker:
-        description: 'Run tests in Docker container'
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
-  group: playwright-e2e-${{ github.workflow }}-${{ github.ref }}
+  group: playwright-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-<<<<<<< Current (Your changes)
-  actions: write # upload Playwright HTML report artifact
-=======
   actions: write
 
-env:
-  # Default environment variables (can be overridden by secrets)
-  E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'https://staging.bluworks.io' }}
-  API_BASE_URL: ${{ secrets.API_BASE_URL || '' }}
-  E2E_STAGING_OTP: ${{ secrets.E2E_STAGING_OTP || '8182' }}
->>>>>>> Incoming (Background Agent changes)
-
+# ─────────────────────────────────────────────────────────────────────────────
+# Smoke — runs on every PR and every push to main
+# ─────────────────────────────────────────────────────────────────────────────
 jobs:
-  # ===========================================================================
-  # Smoke Tests — runs on every PR and push to main branches
-  # ===========================================================================
   smoke:
     name: Smoke Tests
     if: |
       github.event_name == 'pull_request' ||
-      (github.event_name == 'push' && contains(fromJSON('["main", "master", "develop"]'), github.ref_name)) ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.test_suite == 'smoke')
-    timeout-minutes: 30
+      (github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.suite == 'smoke')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -66,22 +49,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Run Smoke Tests
+      - name: Run smoke tests
         run: npx playwright test --project=smoke
         env:
-          CI: true
+          CI: 'true'
           SKIP_AUTH_SETUP: '1'
+          E2E_BASE_URL: ${{ secrets.APP_BASE_URL || 'https://staging.bluworks.io' }}
+          E2E_STAGING_OTP: ${{ secrets.STAGING_OTP || '8182' }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: smoke-report
+          name: smoke-html-report
           path: playwright-report/
           retention-days: 7
 
@@ -92,16 +79,14 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  # ===========================================================================
-  # Regression Tests — runs on manual dispatch or scheduled
-  # ===========================================================================
+# ─────────────────────────────────────────────────────────────────────────────
+# Regression — manual dispatch only
+# ─────────────────────────────────────────────────────────────────────────────
   regression:
     name: Regression Tests
-    if: |
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.test_suite == 'regression') ||
-      (github.event_name == 'push' && github.ref_name == 'main')
-    timeout-minutes: 60
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.suite == 'regression'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -114,19 +99,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Regression Tests
+      - name: Run regression tests
         run: npx playwright test --project=regression
         env:
-          CI: true
+          CI: 'true'
           SKIP_AUTH_SETUP: '1'
+          E2E_BASE_URL: ${{ secrets.APP_BASE_URL || 'https://staging.bluworks.io' }}
+          E2E_STAGING_OTP: ${{ secrets.STAGING_OTP || '8182' }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: regression-report
+          name: regression-html-report
           path: playwright-report/
           retention-days: 14
 
@@ -137,14 +126,14 @@ jobs:
           path: test-results/
           retention-days: 14
 
-  # ===========================================================================
-  # Onboarding Tests — manual dispatch only
-  # ===========================================================================
+# ─────────────────────────────────────────────────────────────────────────────
+# Onboarding — manual dispatch only
+# ─────────────────────────────────────────────────────────────────────────────
   onboarding:
     name: Onboarding Tests
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_suite == 'onboarding'
-    timeout-minutes: 45
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.suite == 'onboarding'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
@@ -157,19 +146,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Chromium
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Onboarding Tests
+      - name: Run onboarding tests
         run: npx playwright test --project=onboarding
         env:
-          CI: true
+          CI: 'true'
           SKIP_AUTH_SETUP: '1'
+          E2E_BASE_URL: ${{ secrets.APP_BASE_URL || 'https://staging.bluworks.io' }}
+          E2E_STAGING_OTP: ${{ secrets.STAGING_OTP || '8182' }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: onboarding-report
+          name: onboarding-html-report
           path: playwright-report/
           retention-days: 7
 
@@ -177,105 +170,5 @@ jobs:
         if: failure()
         with:
           name: onboarding-traces
-          path: test-results/
-          retention-days: 7
-
-  # ===========================================================================
-  # Full E2E Tests — manual dispatch only
-  # ===========================================================================
-  e2e:
-    name: Full E2E Tests
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_suite == 'e2e'
-    timeout-minutes: 90
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: List all tests
-        run: npm run test:list
-
-      - name: Run Full E2E Suite
-        run: npm run test:e2e
-        env:
-          CI: true
-          SKIP_AUTH_SETUP: '1'
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: e2e-report
-          path: playwright-report/
-          retention-days: 14
-
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: e2e-traces
-          path: test-results/
-          retention-days: 14
-
-  # ===========================================================================
-  # Docker-based Tests — optional, for consistent environment
-  # ===========================================================================
-  docker-tests:
-    name: Docker Tests
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.use_docker == 'true'
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          load: true
-          tags: playwright-e2e:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run tests in Docker
-        run: |
-          docker run --rm \
-            -e CI=true \
-            -e TEST_SUITE=${{ github.event.inputs.test_suite }} \
-            -e E2E_BASE_URL=${{ env.E2E_BASE_URL }} \
-            -e E2E_STAGING_OTP=${{ env.E2E_STAGING_OTP }} \
-            -e SKIP_AUTH_SETUP=1 \
-            -v ${{ github.workspace }}/test-results:/app/test-results \
-            -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
-            playwright-e2e:ci
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: docker-report
-          path: playwright-report/
-          retention-days: 7
-
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: docker-traces
           path: test-results/
           retention-days: 7

@@ -1,0 +1,31 @@
+# =============================================================================
+# Docker Compose — Playwright E2E Tests
+# =============================================================================
+# Usage:
+#   docker compose run --rm playwright         # all tests
+#   docker compose run --rm smoke              # @smoke suite
+#   docker compose run --rm regression         # @regression suite
+#   docker compose run --rm onboarding        # @onboarding suite
+#   docker compose run --rm playwright npx playwright test tests/smoke/login.smoke.spec.ts
+# =============================================================================
+
+services:
+  playwright:
+    build: .
+    env_file: .env
+    volumes:
+      - ./playwright-report:/app/playwright-report
+      - ./test-results:/app/test-results
+    command: npx playwright test --project=chromium
+
+  smoke:
+    extends: playwright
+    command: npx playwright test --project=chromium --grep @smoke
+
+  regression:
+    extends: playwright
+    command: npx playwright test --project=chromium --grep @regression
+
+  onboarding:
+    extends: playwright
+    command: npx playwright test --project=chromium --grep @onboarding
