@@ -102,29 +102,21 @@ export default defineConfig({
     },
 
     // ==========================================================================
-    // Smoke Tests Project — quick validation suite
+    // Smoke Tests Project — login-flow tests; always start fresh (no auth state)
     // ==========================================================================
     {
       name: 'smoke',
       testMatch: '**/*.smoke.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        ...(skipSetup ? {} : { storageState: authFile }),
-      },
-      dependencies: skipSetup ? [] : ['setup'],
+      use: { ...devices['Desktop Chrome'] },
     },
 
     // ==========================================================================
-    // Regression Tests Project — comprehensive test suite
+    // Regression Tests Project — login-flow tests; always start fresh (no auth state)
     // ==========================================================================
     {
       name: 'regression',
       testMatch: '**/*.regression.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        ...(skipSetup ? {} : { storageState: authFile }),
-      },
-      dependencies: skipSetup ? [] : ['setup'],
+      use: { ...devices['Desktop Chrome'] },
     },
 
     // ==========================================================================

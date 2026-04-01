@@ -22,11 +22,6 @@
     "install:browsers:chrome": "playwright install chrome",
     "install:browsers:ci":  "playwright install --with-deps chromium",
 
-    "docker:test":       "docker compose run --rm playwright",
-    "docker:smoke":      "docker compose run --rm smoke",
-    "docker:regression": "docker compose run --rm regression",
-    "docker:onboarding": "docker compose run --rm onboarding",
-
     "report:show": "playwright show-report",
     "report:open": "playwright show-report playwright-report",
 

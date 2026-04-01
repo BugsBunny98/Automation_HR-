@@ -32,6 +32,11 @@ export const LOGIN_URL = `${BASE_URL}/auth/login` as const;
 export const HOME_URL = `${BASE_URL}/home` as const;
 
 /**
+ * Regex to assert user is still on the login page.
+ */
+export const loginUrlRegex = /\/auth\/login/;
+
+/**
  * Successful mobile login does not always land on `/home` on staging (e.g. billing-blocked for some users).
  * Assertions use this pattern so tests stay honest with the product while still proving we left `/auth/login`.
  */
