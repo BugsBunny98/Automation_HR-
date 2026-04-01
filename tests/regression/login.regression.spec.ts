@@ -9,6 +9,9 @@ import {
   type EgyptPrefix,
 } from '../data/loginData';
 import { LoginPage } from '../pages/LoginPage';
+import { test as enhancedTest } from '../core/fixtures/enhancedFixtures';
+import { assertVisible, assertHidden, assertUrlContains } from '../core/assertions/assertionHelpers';
+import { recoverableFill } from '../core/resilience/recoverable-actions';
 
 // ---------------------------------------------------------------------------
 // Test case matrix
@@ -78,18 +81,47 @@ test.describe('Login — regression', { tag: '@regression' }, () => {
   // Negative: wrong country / mismatched number
   // -------------------------------------------------------------------------
 
-  test('UAE number entered while Egypt is still selected — validation shown, no OTP step', async ({ page }) => {
-    // ✅ [4] Replaced expect.poll() with a direct, deterministic assertion.
-    // The expected outcome is clear: the app should block progression and show
-    // an error. If both validation paths are genuinely possible, split into two
-    // separate tests with concrete per-path assertions instead.
-    await login.enterPhone(invalidPhones.uaeNumberWhileEgyptSelected);
-    await login.submitPhone();
+  // Enhanced test with resilience layer and activity logging
+  enhancedTest(
+    'UAE number entered while Egypt is still selected — validation shown, no OTP step',
+    async ({ page, activityLogger, diagnostics, resilientPhoneInput }) => {
+      activityLogger.startStep('Enter UAE number with Egypt country selected');
 
-    await expect(login.validationOrErrorMessage).toBeVisible({ timeout: 10_000 });
-    await expect(login.otpEntryArea).toBeHidden();
-    await expect(page).toHaveURL(loginUrlRegex);
-  });
+      // Use resilient locator with fallback strategies
+      await recoverableFill(
+        await resilientPhoneInput.getLocator(),
+        invalidPhones.uaeNumberWhileEgyptSelected,
+        { logger: activityLogger },
+      );
+
+      await login.submitPhone();
+      activityLogger.endStep('pass');
+
+      activityLogger.startStep('Verify validation error and blocked progression');
+
+      // Use assertion helpers with logging
+      await assertVisible(login.validationOrErrorMessage, {
+        message: 'Validation error should be shown for mismatched country/phone',
+        timeout: 10_000,
+        logger: activityLogger,
+      });
+
+      await assertHidden(login.otpEntryArea, {
+        message: 'OTP step should not appear for invalid phone',
+        logger: activityLogger,
+      });
+
+      await assertUrlContains(page, loginUrlRegex, {
+        message: 'Should remain on login page',
+        logger: activityLogger,
+      });
+
+      activityLogger.endStep('pass');
+
+      // Log diagnostics summary
+      activityLogger.logAction('other', `Diagnostics summary: ${diagnostics.getSummary()}`);
+    },
+  );
 
   // -------------------------------------------------------------------------
   // Negative: malformed / empty input

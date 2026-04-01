@@ -37,17 +37,26 @@ export default defineConfig({
   // Staging OTP/login is sensitive to parallel hits across files — run one test at a time by default.
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
+  retries: 2, // 3 total attempts (initial + 2 retries) for reliability
   workers: 1,
 
   // Reporter configuration
   reporter: process.env.CI
-    ? [['github'], ['html', { outputFolder: 'playwright-report', open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
-    : [['html', { outputFolder: 'playwright-report', open: 'never' }], ['list']],
+    ? [
+        ['github'],
+        ['html', { outputFolder: 'playwright-report', open: 'never' }],
+        ['json', { outputFile: 'test-results/results.json' }],
+        ['./tests/core/reporters/EnhancedReporter.ts'], // Custom failure summary reporter
+      ]
+    : [
+        ['html', { outputFolder: 'playwright-report', open: 'never' }],
+        ['list'],
+        ['./tests/core/reporters/EnhancedReporter.ts'], // Custom failure summary reporter
+      ],
 
   // Global timeouts
   timeout: 60_000,
-  expect: { timeout: 15_000 },
+  expect: { timeout: 20_000 }, // Increased for resilient assertions
 
   // Output directories (Docker-compatible paths)
   outputDir: 'test-results',

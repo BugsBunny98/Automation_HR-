@@ -1,12 +1,18 @@
 import type { Locator, Page } from '@playwright/test';
 import { LOGIN_URL } from '../data/loginData';
+import type { ActivityLogger } from '../core/activity/ActivityLogger';
 
 /**
  * Thin page object: navigation, country/phone/OTP actions, and locators for spec-level assertions.
  * Do not add assertions here.
+ *
+ * Optional activity logging:
+ *   const login = new LoginPage(page, activityLogger);
+ *   await login.goto(); // Logs navigation automatically
  */
 export class LoginPage {
   readonly page: Page;
+  private activityLogger?: ActivityLogger;
 
   /** Native `<select>` when the app uses one; empty count means custom picker. */
   readonly nativeCountrySelect: Locator;
@@ -57,8 +63,9 @@ export class LoginPage {
    */
   readonly validationOrErrorMessage: Locator;
 
-  constructor(page: Page) {
+  constructor(page: Page, activityLogger?: ActivityLogger) {
     this.page = page;
+    this.activityLogger = activityLogger;
 
     this.nativeCountrySelect = page.locator('select').first();
 
@@ -103,8 +110,10 @@ export class LoginPage {
   }
 
   async goto(): Promise<void> {
+    this.activityLogger?.logAction('navigation', 'Navigate to login page', { url: LOGIN_URL });
     await this.page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
     await this.phoneInput.waitFor({ state: 'visible' });
+    this.activityLogger?.logAction('navigation', 'Login page loaded', { url: this.page.url() });
   }
 
   private dialFromChipText(raw: string): string | null {
@@ -113,6 +122,8 @@ export class LoginPage {
   }
 
   async selectCountry(countryName: string): Promise<void> {
+    this.activityLogger?.logAction('click', `Select country: ${countryName}`);
+
     if ((await this.nativeCountrySelect.count()) > 0) {
       const option = this.nativeCountrySelect
         .locator('option')
@@ -125,6 +136,7 @@ export class LoginPage {
         const labelText = (await option.innerText()).trim();
         await this.nativeCountrySelect.selectOption({ label: labelText });
       }
+      this.activityLogger?.logAction('click', `Country selected via native select: ${countryName}`);
       return;
     }
 
@@ -136,6 +148,7 @@ export class LoginPage {
       const chipText = ((await chip.innerText()) || (await chip.textContent()) || '').trim();
       const currentDial = this.dialFromChipText(chipText);
       if (currentDial === targetDial) {
+        this.activityLogger?.logAction('click', `Country already selected: ${countryName} (${targetDial})`);
         return;
       }
       await chip.click();
@@ -155,17 +168,24 @@ export class LoginPage {
 
     const row = this.page.getByRole('listitem').filter({ hasText: listRowPattern }).first();
     await row.click();
+    this.activityLogger?.logAction('click', `Country selected via custom picker: ${countryName}`);
   }
 
   async enterPhone(phone: string): Promise<void> {
+    const redactedPhone = this.activityLogger?.redactSensitive(phone) || phone;
+    this.activityLogger?.logAction('fill', `Enter phone number: ${redactedPhone}`);
     await this.phoneInput.fill(phone);
   }
 
   async submitPhone(): Promise<void> {
+    this.activityLogger?.logAction('click', 'Submit phone number');
     await this.continueButton.click();
   }
 
   async enterOtp(otp: string): Promise<void> {
+    const redactedOtp = this.activityLogger?.redactSensitive(otp) || '****';
+    this.activityLogger?.logAction('fill', `Enter OTP: ${redactedOtp}`);
+
     if (otp === '') {
       await this.clearOtpFields();
       return;
@@ -186,6 +206,7 @@ export class LoginPage {
 
   /** Clears single or split OTP fields (no assertions). */
   async clearOtpFields(): Promise<void> {
+    this.activityLogger?.logAction('fill', 'Clear OTP fields');
     const n = await this.otpDigitInputs.count();
     if (n > 0) {
       for (let i = 0; i < n; i += 1) {
@@ -197,6 +218,7 @@ export class LoginPage {
   }
 
   async submitOtp(): Promise<void> {
+    this.activityLogger?.logAction('click', 'Submit OTP');
     await this.otpVerifyButton.click();
   }
 
