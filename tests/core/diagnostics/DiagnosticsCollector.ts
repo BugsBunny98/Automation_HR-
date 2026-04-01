@@ -156,6 +156,9 @@ export class DiagnosticsCollector {
     const filename = `diagnostics-${testTitle}-retry${retryIndex}.json`;
     const filepath = path.join(this.testInfo.outputDir, filename);
 
+    // Ensure output directory exists
+    fs.mkdirSync(this.testInfo.outputDir, { recursive: true });
+
     fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf-8');
     await this.testInfo.attach('diagnostics', { path: filepath, contentType: 'application/json' });
 

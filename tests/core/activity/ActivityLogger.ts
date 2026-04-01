@@ -243,6 +243,9 @@ export class ActivityLogger {
       },
     };
 
+    // Ensure output directory exists
+    fs.mkdirSync(this.testInfo.outputDir, { recursive: true });
+
     // Save JSON
     const jsonPath = path.join(this.testInfo.outputDir, `${baseFilename}.json`);
     fs.writeFileSync(jsonPath, JSON.stringify(logData, null, 2), 'utf-8');
